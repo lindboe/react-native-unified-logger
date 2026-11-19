@@ -1,0 +1,19 @@
+// The demo app lives in an npm workspace, so react-native and the Gradle
+// plugin are hoisted to the workspace root. Resolve them through Node instead
+// of assuming ../node_modules, the same way the iOS Podfile does.
+pluginManagement {
+  def gradlePluginDir = new File(
+    ["node", "--print", "require.resolve('@react-native/gradle-plugin/package.json')"]
+      .execute(null, rootDir).text.trim()
+  ).parentFile
+  includeBuild(gradlePluginDir.absolutePath)
+}
+plugins { id("com.facebook.react.settings") }
+extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+rootProject.name = 'LoggerDemo'
+include ':app'
+def gradlePluginDir = new File(
+  ["node", "--print", "require.resolve('@react-native/gradle-plugin/package.json')"]
+    .execute(null, rootDir).text.trim()
+).parentFile
+includeBuild(gradlePluginDir.absolutePath)

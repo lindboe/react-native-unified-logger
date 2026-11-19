@@ -1,0 +1,15 @@
+{
+  "name": "rnlogger-workspace",
+  "private": true,
+  "workspaces": [
+    "react-native-unified-logger",
+    "example"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p react-native-unified-logger/tsconfig.json && tsc --noEmit -p example/tsconfig.json",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
