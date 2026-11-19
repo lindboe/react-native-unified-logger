@@ -1,6 +1,6 @@
 # react-native-unified-logger
 
-Log the same way from TypeScript, Swift/Objective-C and Kotlin/Java in a React Native app. Output goes to the platform's native log: `os_log` on iOS (subsystem = your bundle identifier, category = the tag) and logcat on Android (using the tag). An optional JavaScript callback receives every entry from every layer (JS, iOS, Android), which makes remote logging a few lines of code. Entries logged natively before JavaScript has started are buffered (up to 500) and delivered once JavaScript is ready.
+Log the same way from TypeScript, Swift/Objective-C and Kotlin/Java in a React Native app. Output goes to the platform's native log: `os_log` on iOS (subsystem = your bundle identifier, category = the tag) and logcat on Android (using the tag). An optional JavaScript callback receives every entry from every layer (JS, iOS, Android), which makes remote logging a few lines of code. Entries logged natively before your app configures the logger are retained (up to 500) and delivered to the callback once you enable one.
 
 ## Requirements
 
@@ -27,7 +27,7 @@ jest.mock('react-native-unified-logger', () =>
 );
 ```
 
-The mock records every call in `__entries`, exposes the same API with `jest.fn()` methods, and has `__emitNative(entry)` to simulate a native-originated entry reaching your callback.
+The mock exposes the same API with `jest.fn()` methods and applies the same `minLevel`, `localDestination` and callback rules as the real library, but writes nothing to the console or to native. Every entry that passes `minLevel` is recorded in `__entries` and handed to the callback. `__emitNative(entry)` simulates a native-originated entry (`source` defaults to `nativeSource`).
 
 ## Quick start
 
@@ -294,7 +294,7 @@ configureLogger({
 
 Notes:
 
-- Do not call the logger from inside the callback, directly or through code it calls (including `fetch` error handlers). That feeds entries back into the callback and can loop.
+- Entries logged from inside the callback, directly or through code it calls (including `fetch` error handlers), still go to the local destination but are not fed back into the callback, so a sink that logs its own failures cannot loop.
 - If the callback throws, the exception is caught and reported with `console.error`, so a failing sink cannot take the app down.
 - The callback receives entries from iOS and Android native code too, including those logged before JavaScript started (see [Caveats](#caveats)). Check `entry.source` to tell them apart.
 
@@ -326,7 +326,6 @@ Other exported types: `LocalDestination`, `LoggerOptions` and `Logger`. Other ex
 - **JavaScript reloads.** A reload in development creates a new runtime that native treats as unconfigured, exactly like a cold start: native entries are retained until your app's `configureLogger` call runs again, then delivered if forwarding is on.
 - **One React Native host.** The native state is a process-wide singleton attached to the most recently created JS runtime. Brownfield apps that run several React Native hosts in one process will have all native entries forwarded to the latest one.
 - **iOS lock.** Native entries are handed to the JS event emitter while a non-recursive lock is held. Do not route React Native's own `RCTLog` output into `UnifiedLogger` on iOS, since anything on the emit path that logs through `RCTLog` would re-enter the logger.
-- **Logcat tag length.** There is no tag length limit on Android API 26 and later. The package's minSdk is 24, and tags longer than 23 characters may be a problem on API 24 and 25 only. Keep tags short if you support those versions.
 - **No persistence.** The library does not write logs to disk and does not retry delivery. What survives is whatever the platform log keeps (see [Viewing and filtering](#viewing-and-filtering)) and whatever your callback sends.
 
 ## Example app

@@ -28,9 +28,9 @@ object UnifiedLogger {
    * @param message the log text.
    */
   @JvmStatic
-  fun log(level: UnifiedLogLevel, tag: String?, message: String?) {
-    // Never crash the caller: Java code may pass null.
-    UnifiedLoggerCore.logFromNative(level, tag ?: "", message ?: "null")
+  fun log(level: UnifiedLogLevel?, tag: String?, message: String?) {
+    // Never crash the caller: Java code may pass null. Same fallbacks as iOS.
+    UnifiedLoggerCore.logFromNative(level ?: UnifiedLogLevel.DEBUG, tag ?: "", message ?: "")
   }
 
   /** Logs [message] under [tag] at [UnifiedLogLevel.DEBUG]. */
@@ -67,5 +67,5 @@ object UnifiedLogger {
 
   // Mirrors android.util.Log's (tag, msg, tr) overloads: message, newline, stack trace.
   private fun withStackTrace(message: String?, tr: Throwable?): String =
-      if (tr == null) message ?: "null" else (message ?: "null") + "\n" + Log.getStackTraceString(tr)
+      if (tr == null) message ?: "" else (message ?: "") + "\n" + Log.getStackTraceString(tr)
 }

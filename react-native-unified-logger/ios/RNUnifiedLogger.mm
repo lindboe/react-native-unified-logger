@@ -7,7 +7,7 @@
   do {                                                                           \
     va_list args;                                                                \
     va_start(args, FORMAT);                                                      \
-    NSString *message = [[NSString alloc] initWithFormat:FORMAT arguments:args]; \
+    NSString *message = (FORMAT) ? [[NSString alloc] initWithFormat:(FORMAT) arguments:args] : @""; \
     va_end(args);                                                                \
     [[RNUnifiedLoggerCore sharedInstance] logLevel:(LEVEL) tag:(TAG) message:message]; \
   } while (0)

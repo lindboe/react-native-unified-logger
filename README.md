@@ -23,12 +23,22 @@ npm run pods --workspace example
 
 ## Checks
 
+Library unit tests (including the shipped Jest mock):
+
 ```bash
 npm test
 ```
 
+Type checks for the library and the example app:
+
 ```bash
 npm run typecheck
+```
+
+The example app's own render test:
+
+```bash
+npm test --workspace example
 ```
 
 ## Run the demo

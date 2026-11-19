@@ -2,18 +2,29 @@
 // plugin are hoisted to the workspace root. Resolve them through Node instead
 // of assuming ../node_modules, the same way the iOS Podfile does.
 pluginManagement {
-  def gradlePluginDir = new File(
-    ["node", "--print", "require.resolve('@react-native/gradle-plugin/package.json')"]
-      .execute(null, rootDir).text.trim()
-  ).parentFile
-  includeBuild(gradlePluginDir.absolutePath)
+  // Defined here because pluginManagement {} must be the first statement.
+  // Fails with a clear message when node is not on the Gradle daemon's PATH
+  // (e.g. Android Studio launched from the Dock with nvm-managed Node) instead
+  // of a NullPointerException on a null parentFile later on.
+  // Shared with app/build.gradle through gradle.ext.
+  gradle.ext.nodePackageDir = { String pkg, File cwd ->
+    def out = ""
+    try {
+      def proc = ["node", "--print", "require.resolve('" + pkg + "/package.json')"].execute(null, cwd)
+      out = proc.text.trim()
+      if (proc.waitFor() != 0) out = ""
+    } catch (IOException ignored) {
+      // node is not on PATH at all
+    }
+    if (out.isEmpty()) {
+      throw new GradleException("Could not resolve '" + pkg + "' through node. Is node on the PATH of the process running Gradle?")
+    }
+    new File(out).parentFile
+  }
+  includeBuild(gradle.ext.nodePackageDir("@react-native/gradle-plugin", rootDir).absolutePath)
 }
 plugins { id("com.facebook.react.settings") }
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'LoggerDemo'
 include ':app'
-def gradlePluginDir = new File(
-  ["node", "--print", "require.resolve('@react-native/gradle-plugin/package.json')"]
-    .execute(null, rootDir).text.trim()
-).parentFile
-includeBuild(gradlePluginDir.absolutePath)
+includeBuild(gradle.ext.nodePackageDir("@react-native/gradle-plugin", rootDir).absolutePath)

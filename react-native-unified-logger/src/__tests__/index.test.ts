@@ -59,6 +59,7 @@ beforeEach(() => {
   spies = consoleSpies();
   mockNative.configure.mockClear();
   mockNative.log.mockClear();
+  mockNative.onLog.mockClear();
   resetLogger();
   mockNative.configure.mockClear();
 });
@@ -148,6 +149,29 @@ describe('callback', () => {
     });
     expect(() => log.info('x')).not.toThrow();
     expect(spies.error).toHaveBeenCalled();
+  });
+
+  test('re-configuring with a callback subscribes to onLog once', () => {
+    configureLogger({ callback: jest.fn() });
+    configureLogger({ callback: jest.fn(), minLevel: 'info' });
+    configureLogger({ localDestination: 'js' });
+    expect(mockNative.onLog).toHaveBeenCalledTimes(1);
+    expect(mockNative.listeners).toHaveLength(1);
+  });
+
+  test('an entry logged from inside the callback is not fed back into it', () => {
+    const seen: string[] = [];
+    configureLogger({
+      localDestination: 'js',
+      callback: entry => {
+        seen.push(entry.message);
+        log.error('upload failed for', entry.message);
+      },
+    });
+    expect(() => log.info('x')).not.toThrow();
+    expect(seen).toEqual(['x']);
+    // The inner entry still reaches its local destination.
+    expect(spies.error).toHaveBeenCalledWith('[App] upload failed for x');
   });
 
   test('removing the callback restores platformSpecific and unsubscribes', () => {
@@ -278,7 +302,7 @@ describe('native entry filtering', () => {
 });
 
 describe('formatMessage', () => {
-  test('formats like console.log', () => {
+  test('strings as is, Errors as stack, objects as JSON, functions by name', () => {
     const err = new Error('e');
     expect(formatMessage('a', [1, { b: 2 }, undefined, null])).toBe(
       'a 1 {"b":2} undefined null',

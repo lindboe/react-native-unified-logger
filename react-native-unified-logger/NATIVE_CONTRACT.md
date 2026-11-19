@@ -20,7 +20,7 @@ Spec file: `src/NativeUnifiedLogger.ts` (read it; it is the source of truth). Ge
 3. `configure(config)` from JS: update the three settings, mark configured; if forwardToJs, flush the buffer in order via emitOnLog and clear it; otherwise keep the buffer untouched. JS never calls configure at import time; only the app's `configureLogger`/`resetLogger` does, so "unconfigured" means "the app has not decided yet" on both a cold start and a reload.
 4. `log(level, tag, message)` from JS: write directly to the platform log (always). Do NOT emit back to JS and do NOT buffer.
 5. Thread safety: the public API may be called from any thread; guard core state with a lock. Clamp levels to 0..3 in every entry point.
-6. Null-safety: never crash the caller (nil/null tag or message become "" / "null").
+6. Null-safety: never crash the caller. A nil/null tag or message becomes "" on both platforms (a nil format string on iOS also yields ""); a null level from Java becomes debug.
 
 ## Platform log mapping
 iOS (os_log): debug→OS_LOG_TYPE_DEBUG, info→OS_LOG_TYPE_INFO, warn→OS_LOG_TYPE_DEFAULT, error→OS_LOG_TYPE_ERROR. Subsystem = main bundle identifier (fallback "react-native-unified-logger"), category = tag. Cache `os_log_t` per tag in a dictionary under the lock. Format `"%{public}@"`.
