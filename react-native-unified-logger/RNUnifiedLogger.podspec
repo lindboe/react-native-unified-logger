@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.license      = package["license"]
   s.authors      = package["author"] || "react-native-unified-logger contributors"
   s.platforms    = min_supported_versions
-  s.source       = { :git => package.dig("repository", "url") || "", :tag => "#{s.version}" }
+  s.source       = { :git => (package.dig("repository", "url") || "").sub(/\Agit\+/, ""), :tag => "#{s.version}" }
 
   s.source_files        = "ios/**/*.{h,m,mm}"
   # Only the plain Objective-C logging API is public; the Turbo Module and the

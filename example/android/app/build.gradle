@@ -51,12 +51,12 @@ react {
     // hermesFlags = ["-O", "-output-source-map"]
 
     /* Monorepo: resolve hoisted packages through Node (see settings.gradle). */
-    def rnDir = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).parentFile
-    reactNativeDir = rnDir
-    codegenDir = new File(["node", "--print", "require.resolve('@react-native/codegen/package.json')"].execute(null, rootDir).text.trim()).parentFile
+    // gradle.ext.nodePackageDir is defined in settings.gradle and fails clearly when node is missing.
+    def nodePackageDir = gradle.ext.nodePackageDir
+    reactNativeDir = nodePackageDir("react-native", rootDir)
+    codegenDir = nodePackageDir("@react-native/codegen", rootDir)
     // The plugin looks for hermesc in <root>/node_modules/hermes-compiler, which is hoisted too.
-    def hermesCompilerDir = new File(["node", "--print", "require.resolve('hermes-compiler/package.json')"].execute(null, rootDir).text.trim()).parentFile
-    hermesCommand = "${hermesCompilerDir}/hermesc/%OS-BIN%/hermesc"
+    hermesCommand = nodePackageDir("hermes-compiler", rootDir).absolutePath + "/hermesc/%OS-BIN%/hermesc"
 
     /* Autolinking */
     autolinkLibrariesWithApp()

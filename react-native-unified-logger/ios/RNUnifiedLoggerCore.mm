@@ -159,9 +159,10 @@ static RNULogLevel RNUClampLevel(RNULogLevel level)
 {
   os_unfair_lock_lock(&_lock);
   if (_sink == sink) {
-    // Keep _configured and _forwardToJs: with forwarding on, entries buffer
-    // again (no instance); with forwarding off, they are not buffered.
     _sink = nil;
+    // The JS runtime is gone (reload or teardown). Buffer again until the next
+    // runtime configures, as on a cold start and as Android does in detach().
+    _configured = NO;
   }
   os_unfair_lock_unlock(&_lock);
 }

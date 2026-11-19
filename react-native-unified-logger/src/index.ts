@@ -134,14 +134,23 @@ function writeToConsole(entry: LogEntry): void {
   }
 }
 
+let inCallback = false;
+
 function invokeCallback(entry: LogEntry): void {
   const cb = state.callback;
   if (!cb) return;
+  // An entry logged from inside the callback (directly or through code it
+  // calls) still goes to its local destination but is not fed back into the
+  // callback, so a sink that logs its own failures cannot recurse.
+  if (inCallback) return;
+  inCallback = true;
   try {
     cb(entry);
   } catch (e) {
-    // Never let a failing remote sink take the app down or recurse into the logger.
+    // Never let a failing remote sink take the app down.
     console.error('[react-native-unified-logger] callback threw:', e);
+  } finally {
+    inCallback = false;
   }
 }
 
